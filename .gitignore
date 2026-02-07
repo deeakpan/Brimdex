@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# docs (local-only)
+DEVELOPMENT.md
+
+# deployment addresses
+deployments.json
+
+# bot storage
+markets-storage.json
+markets-storage.json.tmp
+
+# external directories
+/AMM-CONTRACT/
+/CLOB/

@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "OrderPriceVolumeSet",
+  "sourceName": "contracts/libraries/OrderPriceVolumeSet.sol",
+  "abi": [],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea2646970667358221220fa1cb64ea4eeb33a97c4b32da677669e00d0b545c18aca45c808b7c36dd85f0f64736f6c634300081e0033",
+  "deployedBytecode": "0x600080fdfea2646970667358221220fa1cb64ea4eeb33a97c4b32da677669e00d0b545c18aca45c808b7c36dd85f0f64736f6c634300081e0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

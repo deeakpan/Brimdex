@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-inter: var(--font-inter);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +24,35 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Thin dark scrollbar for activity lists */
+.scrollbar-thin-dark {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #3f3f46 transparent; /* thumb, track */
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-track {
+  background: #09090b; /* very dark track */
+}
+
+.scrollbar-thin-dark::-webkit-scrollbar-thumb {
+  background-color: #52525b; /* dark grey thumb */
+  border-radius: 9999px;
 }

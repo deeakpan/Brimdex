@@ -1,0 +1,77 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "BlockTickHandler",
+  "sourceName": "contracts/BlockTickHandler.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "OnlyReactivityPrecompile",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "BlockTick",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "emitter",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32[]",
+          "name": "eventTopics",
+          "type": "bytes32[]"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "onEvent",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608080604052346015576101ae908161001b8239f35b600080fdfe608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a71461012557506353edf33d1461003557600080fd5b34610120576060366003190112610120576004356001600160a01b038116036101205760243567ffffffffffffffff811161012057366023820112156101205780600401359067ffffffffffffffff821161012057602490369260051b0101116101205760443567ffffffffffffffff8111610120573660238201121561012057806004013567ffffffffffffffff8111610120573691016024011161012057610100330361010f577f77ae751da2d1162bd52eb8540abd08c6258f51ad1d9753d8a5b0706089acea6c60408051438152426020820152a1005b63191fbb7560e01b60005260046000fd5b600080fd5b34610120576020366003190112610120576004359063ffffffff60e01b8216809203610120576020916301ffc9a760e01b8114908115610167575b5015158152f35b6353edf33d60e01b1490508361016056fea26469706673582212204665651fac3c0736bf5033a198ca92f469d1a9dcbbfd5ffe43d0df999188cc7864736f6c634300081e0033",
+  "deployedBytecode": "0x608080604052600436101561001357600080fd5b60003560e01c90816301ffc9a71461012557506353edf33d1461003557600080fd5b34610120576060366003190112610120576004356001600160a01b038116036101205760243567ffffffffffffffff811161012057366023820112156101205780600401359067ffffffffffffffff821161012057602490369260051b0101116101205760443567ffffffffffffffff8111610120573660238201121561012057806004013567ffffffffffffffff8111610120573691016024011161012057610100330361010f577f77ae751da2d1162bd52eb8540abd08c6258f51ad1d9753d8a5b0706089acea6c60408051438152426020820152a1005b63191fbb7560e01b60005260046000fd5b600080fd5b34610120576020366003190112610120576004359063ffffffff60e01b8216809203610120576020916301ffc9a760e01b8114908115610167575b5015158152f35b6353edf33d60e01b1490508361016056fea26469706673582212204665651fac3c0736bf5033a198ca92f469d1a9dcbbfd5ffe43d0df999188cc7864736f6c634300081e0033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
