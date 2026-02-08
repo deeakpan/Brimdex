@@ -34,7 +34,7 @@
     "react-dom": "19.2.3",
     "react-ts-tradingview-widgets": "^1.2.8",
     "recharts": "^2.12.7",
-    "viem": "^2.45.0",
+    "viem": "~2.37.8",
     "wagmi": "^3.4.1"
   },
   "devDependencies": {
