@@ -1,0 +1,13 @@
+{
+  "somniaTestnet": {
+    "network": "somniaTestnet",
+    "deployer": "0x7f4b0aF0aBB0184ab36962273F266a6f324bB176",
+    "usdc": "0x7A17622b5a7bCdff1D0980169CdDdcbEDBc4cDEE",
+    "factory": "0x14295F0f07621AD556C27AA0cBe569d2e988A618",
+    "orderBook": "0x707c2549EAF3b05CF7a546D8cA3aDAe7F6DEB3b5",
+    "libraries": {
+      "OrderBookLinkedList": "0x99cFb8293593e63a4E1a3A94d256FdC819E49f0b"
+    },
+    "timestamp": "2026-02-03T22:26:19.207Z"
+  }
+}
