@@ -1,4 +1,4 @@
-import deployments from "../deployments.json";
+import deployments from "./deployments.json";
 
 // Contract addresses from deployments
 const somniaTestnet = deployments.somniaTestnet as {

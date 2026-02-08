@@ -79,46 +79,51 @@ export default function PositionsPage() {
 
         for (const marketAddress of allMarkets) {
           try {
-            const [boundToken, breakToken, marketConfig, boundName, breakName, boundBal, breakBal] = await Promise.all([
+            // First, get the token addresses and market config
+            const [boundToken, breakToken, marketConfig] = await Promise.all([
               publicClient.readContract({
                 address: CONTRACTS.somniaTestnet.FACTORY as `0x${string}`,
                 abi: FACTORY_ABI,
                 functionName: "marketToBoundToken",
                 args: [marketAddress as `0x${string}`],
-              }),
+              }) as Promise<`0x${string}`>,
               publicClient.readContract({
                 address: CONTRACTS.somniaTestnet.FACTORY as `0x${string}`,
                 abi: FACTORY_ABI,
                 functionName: "marketToBreakToken",
                 args: [marketAddress as `0x${string}`],
-              }),
+              }) as Promise<`0x${string}`>,
               publicClient.readContract({
                 address: marketAddress as `0x${string}`,
                 abi: MARKET_ABI,
                 functionName: "marketConfig",
               }),
+            ]);
+
+            // Then use the tokens to get names and balances
+            const [boundName, breakName, boundBal, breakBal] = await Promise.all([
               publicClient.readContract({
-                address: boundToken as `0x${string}`,
+                address: boundToken,
                 abi: TOKEN_ABI,
                 functionName: "name",
-              }).catch(() => ""),
+              }).catch(() => "") as Promise<string>,
               publicClient.readContract({
-                address: breakToken as `0x${string}`,
+                address: breakToken,
                 abi: TOKEN_ABI,
                 functionName: "name",
-              }).catch(() => ""),
+              }).catch(() => "") as Promise<string>,
               publicClient.readContract({
-                address: boundToken as `0x${string}`,
+                address: boundToken,
                 abi: TOKEN_ABI,
                 functionName: "balanceOf",
                 args: [address as `0x${string}`],
-              }),
+              }) as Promise<bigint>,
               publicClient.readContract({
-                address: breakToken as `0x${string}`,
+                address: breakToken,
                 abi: TOKEN_ABI,
                 functionName: "balanceOf",
                 args: [address as `0x${string}`],
-              }),
+              }) as Promise<bigint>,
             ]);
 
             const boundBalance = boundBal as bigint;

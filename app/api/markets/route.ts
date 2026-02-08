@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createPublicClient, http, defineChain } from "viem";
-import deployments from "../../../deployments.json";
+import deployments from "../../deployments.json";
 // Import ABIs - need to use proper format for viem
 const FACTORY_ABI = [
   {
