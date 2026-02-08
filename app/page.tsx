@@ -1382,6 +1382,12 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-3">
+            <Link 
+              href="/how-it-works"
+              className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400"
+            >
+              How It Works
+            </Link>
             <button
               onClick={() => {}}
               className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
