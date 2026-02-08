@@ -23,6 +23,62 @@ export default function HowItWorksPage() {
     { id: "settlement", title: "Settlement & Redemption" },
   ], []);
 
+  // Initialize section from URL hash on mount and handle browser navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const updateSectionFromHash = () => {
+        const hash = window.location.hash.slice(1); // Remove #
+        if (hash && sections.find(s => s.id === hash)) {
+          setActiveSection(hash);
+        }
+      };
+      
+      // Check hash on mount
+      updateSectionFromHash();
+      
+      // Listen for hash changes (browser back/forward)
+      window.addEventListener('hashchange', updateSectionFromHash);
+      
+      return () => {
+        window.removeEventListener('hashchange', updateSectionFromHash);
+      };
+    }
+  }, [sections]);
+
+  // Update document title, meta tags, and URL when section changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const section = sections.find(s => s.id === activeSection);
+      if (section) {
+        // Update document title
+        const title = `${section.title} - How It Works | Brimdex`;
+        document.title = title;
+        
+        // Update meta description
+        let metaDescription = document.querySelector('meta[name="description"]');
+        if (!metaDescription) {
+          metaDescription = document.createElement('meta');
+          metaDescription.setAttribute('name', 'description');
+          document.head.appendChild(metaDescription);
+        }
+        metaDescription.setAttribute('content', `Learn about ${section.title.toLowerCase()} on Brimdex - ${section.title === 'Overview' ? 'A comprehensive guide to trading on Brimdex' : 'How to trade, hedge, and understand markets on Brimdex'}`);
+        
+        // Update og:title
+        let ogTitle = document.querySelector('meta[property="og:title"]');
+        if (!ogTitle) {
+          ogTitle = document.createElement('meta');
+          ogTitle.setAttribute('property', 'og:title');
+          document.head.appendChild(ogTitle);
+        }
+        ogTitle.setAttribute('content', title);
+        
+        // Update URL hash without triggering scroll
+        const newUrl = `${window.location.pathname}#${activeSection}`;
+        window.history.replaceState(null, '', newUrl);
+      }
+    }
+  }, [activeSection, sections]);
+
   // Reset scroll position when section changes
   useEffect(() => {
     if (containerRef.current) {
@@ -33,6 +89,13 @@ export default function HowItWorksPage() {
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId); // Immediately update active section
     setMobileMenuOpen(false); // Close mobile menu when navigating
+    
+    // Update URL
+    if (typeof window !== 'undefined') {
+      const newUrl = `${window.location.pathname}#${sectionId}`;
+      window.history.pushState(null, '', newUrl);
+    }
+    
     const element = document.getElementById(sectionId);
     if (element && containerRef.current) {
       const container = containerRef.current;
