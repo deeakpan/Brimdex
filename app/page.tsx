@@ -186,6 +186,7 @@ export default function Home() {
   const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
   const [selectedBand, setSelectedBand] = useState<1.5 | 3 | 5>(3);
   const [bandDropdownOpen, setBandDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasSigned, setHasSigned] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -1307,8 +1308,17 @@ export default function Home() {
 
   if (marketsLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-950 via-black to-zinc-900 text-zinc-50">
-        <div className="text-sm text-zinc-400">Loading markets...</div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-950 via-black to-zinc-950 text-zinc-50 relative overflow-hidden">
+        {/* Animated background gradient */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_circle_at_50%_50%,rgba(34,211,238,0.15),transparent_70%),radial-gradient(800px_circle_at_20%_80%,rgba(16,185,129,0.12),transparent_60%)] animate-pulse" />
+        
+        <div className="relative z-10 flex items-center justify-center">
+          <img 
+            src="/logo.png" 
+            alt="BrimDex Logo" 
+            className="h-32 w-auto sm:h-40 sm:w-auto md:h-48 md:w-auto object-contain contrast-pulse"
+          />
+        </div>
       </div>
     );
   }
@@ -1353,53 +1363,184 @@ export default function Home() {
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_10%,rgba(34,211,238,0.10),transparent_60%),radial-gradient(900px_circle_at_80%_30%,rgba(56,189,248,0.08),transparent_55%),radial-gradient(800px_circle_at_50%_100%,rgba(34,211,238,0.06),transparent_60%)]" />
       {/* Top Header */}
       <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-0 hover:opacity-80 transition-opacity cursor-pointer">
-              <img 
-                src="/logo.png" 
-                alt="BrimDex Logo" 
-                className="h-12 w-8 md:h-14 md:w-10 object-cover object-left"
-              />
-              <h1 className="bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-500 bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl" style={{ fontFamily: 'var(--font-geist-sans), sans-serif' }}>
-                Brimdex
-              </h1>
-            </Link>
-            <nav className="hidden items-center gap-8 md:flex">
-              <a href="#markets" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
-                Markets
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
-              </a>
-              <a href="#pools" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
-                Pools
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
-              </a>
-              <Link href="/positions" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
-                Positions
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
+        <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4 sm:py-3 md:px-8 md:py-4">
+          {/* Mobile Layout */}
+          <div className="md:hidden">
+            {/* Top row: Logo and Right buttons */}
+            <div className="flex items-center justify-between w-full">
+              <Link href="/" className="flex items-center gap-0.5 hover:opacity-80 transition-opacity cursor-pointer">
+                <img 
+                  src="/logo.png" 
+                  alt="BrimDex Logo" 
+                  className="h-14 w-9 sm:h-16 sm:w-11 object-contain"
+                />
+                <h1 className="bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-500 bg-clip-text text-base sm:text-lg font-bold tracking-tight text-transparent" style={{ fontFamily: 'var(--font-geist-sans), sans-serif' }}>
+                  Brimdex
+                </h1>
               </Link>
-            </nav>
+              {/* Right: Hamburger and Connect */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 text-zinc-400 transition-colors hover:text-cyan-400"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+                <ConnectKitButton.Custom>
+                  {({ isConnected: ckConnected, show, hide, address: ckAddress, ensName, chain }) => {
+                    if (show) {
+                      connectKitShowRef.current = show;
+                    }
+                    
+                    const connected = isConnected || ckConnected;
+                    const walletAddress = address || ckAddress;
+                    
+                    if (connected && walletAddress) {
+                      return (
+                        <button
+                          onClick={show}
+                          className="group flex items-center overflow-hidden rounded-lg border border-cyan-500/30 bg-zinc-900/80 shadow-lg shadow-cyan-500/10 transition-all hover:border-cyan-500/50 hover:bg-zinc-900"
+                        >
+                          <div className="px-2 py-1.5 text-xs font-medium text-zinc-200">
+                            {formatAddress(walletAddress)}
+                          </div>
+                        </button>
+                      );
+                    }
+                    
+                    return (
+                      <button
+                        onClick={handleConnectClick}
+                        className="group relative flex items-center gap-1.5 overflow-hidden rounded-lg border border-cyan-500/30 bg-gradient-to-r from-cyan-600/90 to-sky-500/90 px-3 py-1.5 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-500 hover:to-sky-400 hover:shadow-cyan-500/40"
+                      >
+                        <span className="relative z-10 flex items-center gap-1.5">
+                          <svg
+                            className="h-3.5 w-3.5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <rect
+                              x="3"
+                              y="6"
+                              width="18"
+                              height="12"
+                              rx="3"
+                              stroke="currentColor"
+                              strokeWidth="1.6"
+                            />
+                            <circle cx="16" cy="12" r="1.4" fill="currentColor" />
+                          </svg>
+                          <span>Connect</span>
+                        </span>
+                        <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                      </button>
+                    );
+                  }}
+                </ConnectKitButton.Custom>
+              </div>
+            </div>
+            
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+              <div className="mt-3 border-t border-zinc-800 pt-3">
+                <nav className="flex flex-col gap-3">
+                  <a 
+                    href="#markets" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400 py-1"
+                  >
+                    Markets
+                  </a>
+                  <a 
+                    href="#pools" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400 py-1"
+                  >
+                    Pools
+                  </a>
+                  <Link 
+                    href="/positions" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400 py-1"
+                  >
+                    Positions
+                  </Link>
+                  <Link 
+                    href="/how-it-works" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400 py-1"
+                  >
+                    How It Works
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-left text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400 py-1"
+                  >
+                    Settings
+                  </button>
+                </nav>
+              </div>
+            )}
           </div>
           
-          <div className="flex items-center gap-3">
-            <Link 
-              href="/how-it-works"
-              className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400"
-            >
-              How It Works
-            </Link>
-            <button
-              onClick={() => {}}
-              className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200"
-              title="Settings"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
-            <ConnectKitButton.Custom>
-              {({ isConnected: ckConnected, show, hide, address: ckAddress, ensName, chain }) => {
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between gap-4">
+            {/* Left: Logo and Navigation */}
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-0 hover:opacity-80 transition-opacity cursor-pointer">
+                <img 
+                  src="/logo.png" 
+                  alt="BrimDex Logo" 
+                  className="h-12 w-8 md:h-14 md:w-10 object-contain"
+                />
+                <h1 className="bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-500 bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl" style={{ fontFamily: 'var(--font-geist-sans), sans-serif' }}>
+                  Brimdex
+                </h1>
+              </Link>
+              <nav className="flex items-center gap-8">
+                <a href="#markets" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
+                  Markets
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
+                </a>
+                <a href="#pools" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
+                  Pools
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
+                </a>
+                <Link href="/positions" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
+                  Positions
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
+                </Link>
+                <Link href="/how-it-works" className="text-base font-medium text-zinc-400 transition-colors hover:text-cyan-400 relative group">
+                  How It Works
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-cyan-400 transition-all group-hover:w-full"></span>
+                </Link>
+              </nav>
+            </div>
+            
+            {/* Right: Settings and Connect */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {}}
+                className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-2.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 flex-shrink-0"
+                title="Settings"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ minWidth: '20px', minHeight: '20px' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+              <ConnectKitButton.Custom>
+                {({ isConnected: ckConnected, show, hide, address: ckAddress, ensName, chain }) => {
                 // Store show function in ref (refs can be set during render, this is safe)
                 if (show) {
                   connectKitShowRef.current = show;
@@ -1413,16 +1554,16 @@ export default function Home() {
                   return (
                     <button
                       onClick={show}
-                      className="group flex items-center overflow-hidden rounded-xl border border-cyan-500/30 bg-zinc-900/80 shadow-lg shadow-cyan-500/10 transition-all hover:border-cyan-500/50 hover:bg-zinc-900"
+                      className="group flex items-center overflow-hidden rounded-lg sm:rounded-xl border border-cyan-500/30 bg-zinc-900/80 shadow-lg shadow-cyan-500/10 transition-all hover:border-cyan-500/50 hover:bg-zinc-900"
                     >
-                      {/* Chain name with gradient */}
-                      <div className="bg-gradient-to-r from-cyan-500 via-sky-400 to-cyan-400 bg-clip-text px-4 py-2.5 text-sm font-semibold text-transparent">
+                      {/* Chain name with gradient - hidden on mobile */}
+                      <div className="hidden sm:block bg-gradient-to-r from-cyan-500 via-sky-400 to-cyan-400 bg-clip-text px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-semibold text-transparent">
                         {chainName}
                       </div>
-                      {/* Divider */}
-                      <div className="h-6 w-px bg-zinc-700" />
+                      {/* Divider - hidden on mobile */}
+                      <div className="hidden sm:block h-6 w-px bg-zinc-700" />
                       {/* Address */}
-                      <div className="px-4 py-2.5 text-sm font-medium text-zinc-200">
+                      <div className="px-2 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium text-zinc-200">
                         {formatAddress(walletAddress)}
                       </div>
                     </button>
@@ -1432,11 +1573,11 @@ export default function Home() {
                 return (
                   <button
                     onClick={handleConnectClick}
-                    className="group relative flex items-center gap-2 overflow-hidden rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-600/90 to-sky-500/90 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-500 hover:to-sky-400 hover:shadow-cyan-500/40"
+                    className="group relative flex items-center gap-1.5 sm:gap-2 overflow-hidden rounded-lg sm:rounded-xl border border-cyan-500/30 bg-gradient-to-r from-cyan-600/90 to-sky-500/90 px-3 sm:px-6 py-1.5 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition-all hover:from-cyan-500 hover:to-sky-400 hover:shadow-cyan-500/40"
                   >
-                    <span className="relative z-10 flex items-center gap-2">
+                    <span className="relative z-10 flex items-center gap-1.5 sm:gap-2">
                       <svg
-                        className="h-4 w-4"
+                        className="h-3.5 w-3.5 sm:h-4 sm:w-4"
                         viewBox="0 0 24 24"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
@@ -1452,13 +1593,15 @@ export default function Home() {
                         />
                         <circle cx="16" cy="12" r="1.4" fill="currentColor" />
                       </svg>
-                      Connect Wallet
+                      <span className="hidden sm:inline">Connect Wallet</span>
+                      <span className="sm:hidden">Connect</span>
                     </span>
                     <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                   </button>
                 );
-              }}
-            </ConnectKitButton.Custom>
+                }}
+              </ConnectKitButton.Custom>
+            </div>
           </div>
         </div>
       </header>
@@ -1470,7 +1613,7 @@ export default function Home() {
             className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
             onClick={() => setWalletModalOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-md bg-zinc-950 shadow-2xl md:max-w-lg">
+          <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-md bg-zinc-950 shadow-2xl sm:max-w-lg">
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between border-b border-zinc-800 p-6">
                 <h2 className="text-xl font-semibold text-zinc-100">Connect Your Wallet</h2>
@@ -1564,9 +1707,9 @@ export default function Home() {
         </>
       )}
 
-      <main className="mx-auto flex max-w-[95%] flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+      <main className="mx-auto flex max-w-[95%] flex-col gap-4 sm:gap-6 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-10">
+        <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
             <div className="relative">
               <button
                 type="button"
@@ -1614,7 +1757,7 @@ export default function Home() {
                     className="fixed inset-0 z-10"
                     onClick={() => setDropdownOpen(false)}
                   />
-                  <div className="absolute left-0 top-full z-20 mt-2 w-64 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-sm shadow-2xl shadow-black/50">
+                  <div className="absolute left-0 top-full z-20 mt-2 w-56 sm:w-64 rounded-lg sm:rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-sm shadow-2xl shadow-black/50">
                     <div 
                       className="max-h-64 overflow-y-auto p-2 scrollbar-hide"
                       style={{
@@ -1747,15 +1890,15 @@ export default function Home() {
                     className="fixed inset-0 z-10"
                     onClick={() => setDurationDropdownOpen(false)}
                   />
-                  <div className="absolute left-0 top-full z-20 mt-2 w-32 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-sm shadow-2xl shadow-black/50">
-                    <div className="p-2">
+                  <div className="absolute left-0 top-full z-20 mt-2 w-28 sm:w-32 rounded-lg sm:rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-sm shadow-2xl shadow-black/50">
+                    <div className="p-1.5 sm:p-2">
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedDuration("24h");
                           setDurationDropdownOpen(false);
                         }}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                        className={`flex w-full items-center justify-between rounded-md sm:rounded-lg px-2 sm:px-3 py-1.5 sm:py-2.5 text-left text-xs sm:text-sm transition ${
                           selectedDuration === "24h"
                             ? "bg-cyan-900/30 text-cyan-100"
                             : "text-zinc-200 hover:bg-zinc-900/80"
@@ -1764,7 +1907,7 @@ export default function Home() {
                         <span>24h</span>
                         {selectedDuration === "24h" && (
                           <svg
-                            className="h-4 w-4 text-cyan-400"
+                            className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -1780,7 +1923,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {}}
                         disabled
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm text-zinc-300 cursor-not-allowed opacity-75"
+                        className="flex w-full items-center justify-between rounded-md sm:rounded-lg px-2 sm:px-3 py-1.5 sm:py-2.5 text-left text-xs sm:text-sm text-zinc-300 cursor-not-allowed opacity-75"
                       >
                         <span>7d</span>
                       </button>
@@ -1788,7 +1931,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {}}
                         disabled
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm text-zinc-300 cursor-not-allowed opacity-75"
+                        className="flex w-full items-center justify-between rounded-md sm:rounded-lg px-2 sm:px-3 py-1.5 sm:py-2.5 text-left text-xs sm:text-sm text-zinc-300 cursor-not-allowed opacity-75"
                       >
                         <span>30d</span>
                       </button>
@@ -1798,14 +1941,14 @@ export default function Home() {
               )}
             </div>
             
-            <div className="rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1">
+            <div className="rounded-full border border-zinc-800 bg-zinc-900/60 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">
               <span className="text-zinc-400">Pair</span>{" "}
               <span className="font-medium text-zinc-100">
                 {selectedMarket.symbol}/USD
               </span>
             </div>
             {selectedMarket.volume24h && (
-              <div className="rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1">
+              <div className="hidden sm:flex rounded-full border border-zinc-800 bg-zinc-900/60 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">
                 <span className="text-zinc-400">24h Vol</span>{" "}
                 <span className="font-medium text-zinc-100">
                   ${(selectedMarket.volume24h / 1e9).toFixed(2)}B
@@ -1817,7 +1960,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setBandDropdownOpen(!bandDropdownOpen)}
-                className="flex items-center gap-2 rounded-xl border border-cyan-700/80 bg-cyan-900/30 px-4 py-2.5 text-sm font-medium text-cyan-100 shadow-lg shadow-black/20 transition-all hover:bg-cyan-900/45 hover:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                className="flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border border-cyan-700/80 bg-cyan-900/30 px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-xs sm:text-sm font-medium text-cyan-100 shadow-lg shadow-black/20 transition-all hover:bg-cyan-900/45 hover:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
               >
                 <span className="text-cyan-200">Band:</span>
                 <span className="font-semibold">±{selectedBand}%</span>
@@ -1844,15 +1987,15 @@ export default function Home() {
                     className="fixed inset-0 z-10"
                     onClick={() => setBandDropdownOpen(false)}
                   />
-                  <div className="absolute left-0 top-full z-20 mt-2 w-32 rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-sm shadow-2xl shadow-black/50">
-                    <div className="p-2">
+                  <div className="absolute left-0 top-full z-20 mt-2 w-28 sm:w-32 rounded-lg sm:rounded-xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-sm shadow-2xl shadow-black/50">
+                    <div className="p-1.5 sm:p-2">
                       <button
                         type="button"
                         onClick={() => {
                           setSelectedBand(1.5);
                           setBandDropdownOpen(false);
                         }}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+                        className={`flex w-full items-center justify-between rounded-md sm:rounded-lg px-2 sm:px-3 py-1.5 sm:py-2.5 text-left text-xs sm:text-sm transition-colors ${
                           selectedBand === 1.5
                             ? "bg-zinc-800 text-white"
                             : "text-zinc-300 hover:bg-zinc-800/50"
@@ -1869,7 +2012,7 @@ export default function Home() {
                           setSelectedBand(3);
                           setBandDropdownOpen(false);
                         }}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                        className={`flex w-full items-center justify-between rounded-md sm:rounded-lg px-2 sm:px-3 py-1.5 sm:py-2.5 text-left text-xs sm:text-sm transition ${
                           selectedBand === 3
                             ? "bg-cyan-900/30 text-cyan-100"
                             : "text-zinc-200 hover:bg-zinc-900/80"
@@ -1878,7 +2021,7 @@ export default function Home() {
                         <span>3%</span>
                         {selectedBand === 3 && (
                           <svg
-                            className="h-4 w-4 text-cyan-400"
+                            className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -1894,7 +2037,7 @@ export default function Home() {
                         type="button"
                         onClick={() => {}}
                         disabled
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm text-zinc-300 cursor-not-allowed opacity-75"
+                        className="flex w-full items-center justify-between rounded-md sm:rounded-lg px-2 sm:px-3 py-1.5 sm:py-2.5 text-left text-xs sm:text-sm text-zinc-300 cursor-not-allowed opacity-75"
                       >
                         <span>5%</span>
                       </button>
@@ -1903,7 +2046,7 @@ export default function Home() {
                 </>
               )}
             </div>
-            <div className="rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1">
+            <div className="rounded-full border border-zinc-800 bg-zinc-900/60 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">
               <span className="text-zinc-400">Expires in</span>{" "}
               <span className="font-mono text-zinc-100">
                 {(() => {
@@ -1924,17 +2067,17 @@ export default function Home() {
           </div>
         </div>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
           {/* Left: Chart + order book + positions */}
-          <div className="flex flex-col gap-4">
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 shadow-lg shadow-black/40">
-              <div className="mb-3 flex flex-col gap-2">
-                <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="rounded-xl sm:rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3 sm:p-4 shadow-lg shadow-black/40">
+              <div className="mb-2 sm:mb-3 flex flex-col gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-100">
+                    <h2 className="text-xs sm:text-sm font-semibold text-zinc-100">
                       {selectedMarket.name} Price – {selectedMarket.symbol}/USD
                     </h2>
-                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">
+                    <div className="mt-1 flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
                       {selectedMarket.marketCap && (
                         <span className="text-zinc-400">
                           Market Cap: <span className="font-medium text-zinc-200">${(selectedMarket.marketCap / 1e9).toFixed(2)}B</span>
@@ -1947,15 +2090,15 @@ export default function Home() {
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <div className="rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1 text-xs">
+                  <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-1">
+                    <div className="rounded-full border border-zinc-800 bg-zinc-900/80 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs">
                       <span className="text-zinc-400">Price</span>{" "}
                       <span className="font-mono text-zinc-100">
                         ${selectedMarket.startPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </div>
                     {selectedMarket.priceChange24h !== undefined && (
-                      <div className={`text-xs font-medium ${
+                      <div className={`text-[10px] sm:text-xs font-medium ${
                         selectedMarket.priceChange24h >= 0 ? "text-emerald-400" : "text-rose-400"
                       }`}>
                         {selectedMarket.priceChange24h >= 0 ? "+" : ""}
@@ -1967,19 +2110,19 @@ export default function Home() {
                 <p className="text-xs text-zinc-500">
                 </p>
               </div>
-              <div className="h-[500px] w-full">
+              <div className="h-[300px] sm:h-[400px] md:h-[500px] w-full">
                 {isClientMounted && selectedMarket && (
                   <TradingViewChart symbol={chartSymbol} />
                 )}
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 shadow-lg shadow-black/40">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-100">
+            <div className="rounded-xl sm:rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3 sm:p-4 shadow-lg shadow-black/40">
+              <div className="mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <h2 className="text-xs sm:text-sm font-semibold text-zinc-100">
                   Market Activity
                 </h2>
-                <span className="text-xs text-zinc-500">Time / side / amount (USDC) / size</span>
+                <span className="text-[10px] sm:text-xs text-zinc-500">Time / side / amount (USDC) / size</span>
               </div>
               <div className="max-h-40 space-y-0 overflow-y-auto pr-1 scrollbar-thin-dark">
                 {recentTrades.length === 0 ? (
@@ -2043,81 +2186,85 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 shadow-lg shadow-black/40">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-zinc-100">
+            <div className="rounded-xl sm:rounded-2xl border border-zinc-800 bg-zinc-950/70 p-3 sm:p-4 shadow-lg shadow-black/40">
+              <div className="mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                <h2 className="text-xs sm:text-sm font-semibold text-zinc-100">
                   My Positions
                 </h2>
-                <span className="text-xs text-zinc-500">
+                <span className="text-[10px] sm:text-xs text-zinc-500">
                   {selectedMarket.symbol}/USD positions
                 </span>
               </div>
               {filteredPositions.length === 0 ? (
-                <p className="text-sm text-zinc-500">
+                <p className="text-xs sm:text-sm text-zinc-500">
                   No open positions for {selectedMarket.symbol}/USD. Place an order to get started.
                 </p>
               ) : (
-                <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/60">
-                  <table className="min-w-full text-left text-xs">
-                    <thead className="bg-zinc-900/80 text-zinc-400">
-                      <tr>
-                        <th className="px-3 py-2 font-medium">Side</th>
-                        <th className="px-3 py-2 font-medium">Size (u)</th>
-                        <th className="px-3 py-2 font-medium">Avg Price</th>
-                        <th className="px-3 py-2 font-medium">Notional</th>
-                        <th className="px-3 py-2 font-medium">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredPositions.map((pos) => {
-                        const notional = pos.size * pos.avgPrice;
-                        return (
-                          <tr
-                            key={pos.id}
-                            className="border-t border-zinc-800/80 text-xs text-zinc-200"
-                          >
-                            <td className="px-3 py-2">
-                              <span
-                                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                  pos.side === "BOUND"
-                                    ? "bg-emerald-700/40 text-emerald-200"
-                                    : "bg-rose-900/50 text-rose-200"
-                                }`}
-                              >
-                                {pos.side === "BOUND" ? "Bound" : "Break"}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 font-mono">
-                              {pos.size.toLocaleString()}
-                            </td>
-                            <td className="px-3 py-2 font-mono">
-                              {pos.avgPrice.toFixed(2)} USDC
-                            </td>
-                            <td className="px-3 py-2 font-mono">
-                              {notional.toFixed(2)} USDC
-                            </td>
-                            <td className="px-3 py-2">
-                              <span className="rounded-full bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-300">
-                                {pos.status === "OPEN" ? "Open" : "Settled"}
-                              </span>
-                            </td>
+                <div className="overflow-x-auto -mx-3 sm:mx-0">
+                  <div className="inline-block min-w-full align-middle">
+                    <div className="overflow-hidden rounded-lg sm:rounded-xl border border-zinc-800/80 bg-zinc-950/60">
+                      <table className="min-w-full text-left text-[10px] sm:text-xs">
+                        <thead className="bg-zinc-900/80 text-zinc-400">
+                          <tr>
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 font-medium">Side</th>
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 font-medium">Size (u)</th>
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 font-medium">Avg Price</th>
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 font-medium">Notional</th>
+                            <th className="px-2 sm:px-3 py-1.5 sm:py-2 font-medium">Status</th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody>
+                          {filteredPositions.map((pos) => {
+                            const notional = pos.size * pos.avgPrice;
+                            return (
+                              <tr
+                                key={pos.id}
+                                className="border-t border-zinc-800/80 text-[10px] sm:text-xs text-zinc-200"
+                              >
+                                <td className="px-2 sm:px-3 py-1.5 sm:py-2">
+                                  <span
+                                    className={`rounded-full px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold ${
+                                      pos.side === "BOUND"
+                                        ? "bg-emerald-700/40 text-emerald-200"
+                                        : "bg-rose-900/50 text-rose-200"
+                                    }`}
+                                  >
+                                    {pos.side === "BOUND" ? "Bound" : "Break"}
+                                  </span>
+                                </td>
+                                <td className="px-2 sm:px-3 py-1.5 sm:py-2 font-mono">
+                                  {pos.size.toLocaleString()}
+                                </td>
+                                <td className="px-2 sm:px-3 py-1.5 sm:py-2 font-mono">
+                                  {pos.avgPrice.toFixed(2)} USDC
+                                </td>
+                                <td className="px-2 sm:px-3 py-1.5 sm:py-2 font-mono">
+                                  {notional.toFixed(2)} USDC
+                                </td>
+                                <td className="px-2 sm:px-3 py-1.5 sm:py-2">
+                                  <span className="rounded-full bg-zinc-900 px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-300">
+                                    {pos.status === "OPEN" ? "Open" : "Settled"}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Right: Order ticket + details */}
-          <div className="flex flex-col gap-3">
-          <div className="group rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4 shadow-xl shadow-black/50 transition-all hover:border-cyan-500/30 hover:shadow-cyan-500/10">
+          <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="group rounded-xl sm:rounded-2xl border border-zinc-800 bg-zinc-950/80 p-3 sm:p-4 shadow-xl shadow-black/50 transition-all hover:border-cyan-500/30 hover:shadow-cyan-500/10">
             <h2 className="mb-3 text-sm font-semibold text-zinc-100">
               Place Order
             </h2>
-            <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-zinc-900/60 p-1 text-xs">
+            <div className="mb-3 sm:mb-4 grid grid-cols-2 gap-1 rounded-lg sm:rounded-xl bg-zinc-900/60 p-1 text-xs">
               <button
                 type="button"
                 className={`rounded-lg px-3 py-1.5 font-medium transition-all ${
@@ -2142,7 +2289,7 @@ export default function Home() {
               </button>
             </div>
 
-            <div className="mb-3 rounded-xl border border-zinc-800 bg-zinc-950/80 p-3 text-xs">
+            <div className="mb-2 sm:mb-3 rounded-lg sm:rounded-xl border border-zinc-800 bg-zinc-950/80 p-2 sm:p-3 text-xs">
               <div className="flex items-center justify-between text-zinc-400">
                 <span>Band</span>
                 <span className="font-mono text-zinc-200">
@@ -2157,7 +2304,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mb-3 flex items-center justify-between text-[11px] text-zinc-400">
+            <div className="mb-2 sm:mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-[11px] text-zinc-400">
               <div className="flex items-center gap-3">
                 <span className="uppercase tracking-[0.14em] text-zinc-500">
                   Order type
