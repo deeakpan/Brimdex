@@ -43,8 +43,8 @@ next-env.d.ts
 # docs (local-only)
 DEVELOPMENT.md
 
-# deployment addresses
-deployments.json
+# deployment addresses (root only - app/deployments.json is needed for build)
+/deployments.json
 
 # bot storage
 markets-storage.json
