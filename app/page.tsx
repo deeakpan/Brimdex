@@ -1378,21 +1378,8 @@ export default function Home() {
                   Brimdex
                 </h1>
               </Link>
-              {/* Right: Hamburger and Connect */}
+              {/* Right: Connect and Hamburger */}
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="p-2 text-zinc-400 transition-colors hover:text-cyan-400"
-                  aria-label="Toggle menu"
-                >
-                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {mobileMenuOpen ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    ) : (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                    )}
-                  </svg>
-                </button>
                 <ConnectKitButton.Custom>
                   {({ isConnected: ckConnected, show, hide, address: ckAddress, ensName, chain }) => {
                     if (show) {
@@ -1445,6 +1432,19 @@ export default function Home() {
                     );
                   }}
                 </ConnectKitButton.Custom>
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 text-zinc-400 transition-colors hover:text-cyan-400"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
               </div>
             </div>
             
