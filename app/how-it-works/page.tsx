@@ -132,88 +132,99 @@ export default function HowItWorksPage() {
     <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-black to-zinc-950 text-zinc-50">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:py-4 md:px-8 gap-2 md:gap-4">
-          <div className="flex items-center gap-2 md:gap-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden text-zinc-400 hover:text-cyan-400 transition-colors p-2"
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
+        <div className="mx-auto max-w-7xl px-3 py-2 sm:px-4 sm:py-3 md:px-8 md:py-4">
+          {/* Mobile Layout */}
+          <div className="md:hidden">
+            {/* Top row: Logo, Feedback/Support, and Hamburger */}
+            <div className="flex items-center justify-between w-full">
+              <Link href="/" className="flex items-center gap-0.5 hover:opacity-80 transition-opacity cursor-pointer">
+                <img 
+                  src="/logo.png" 
+                  alt="BrimDex Logo" 
+                  className="h-14 w-9 sm:h-16 sm:w-11 object-contain"
+                />
+                <h1 className="bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-500 bg-clip-text text-base sm:text-lg font-bold tracking-tight text-transparent" style={{ fontFamily: 'var(--font-geist-sans), sans-serif' }}>
+                  Brimdex
+                </h1>
+              </Link>
+              {/* Right: Feedback, Support, and Hamburger */}
+              <div className="flex items-center gap-2">
+                <button className="text-xs sm:text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400">
+                  Feedback
+                </button>
+                <button className="text-xs sm:text-sm font-medium text-zinc-400 transition-colors hover:text-cyan-400">
+                  Support
+                </button>
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 text-zinc-400 transition-colors hover:text-cyan-400"
+                  aria-label="Toggle menu"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {mobileMenuOpen ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+              </div>
+            </div>
             
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <img src="/logo.png" alt="Brimdex Logo" className="h-10 w-7 md:h-14 md:w-10 object-cover object-left" />
-              <h1 className="bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-500 bg-clip-text text-lg font-bold tracking-tight text-transparent md:text-2xl">
-                Brimdex
-              </h1>
-            </Link>
+            {/* Mobile Menu - Sections Navigation */}
+            {mobileMenuOpen && (
+              <div className="mt-3 border-t border-zinc-800 pt-3">
+                {/* Search Bar */}
+                <div className="mb-4">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                      <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search documentation..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-zinc-900/80 border border-zinc-700 rounded-md text-zinc-50 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+                
+                <nav className="flex flex-col gap-2">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => scrollToSection(section.id)}
+                      className={`w-full text-left text-sm font-medium transition-colors py-2 px-2 rounded ${
+                        activeSection === section.id
+                          ? "text-cyan-400 bg-cyan-500/10"
+                          : "text-zinc-400 hover:text-cyan-400 hover:bg-zinc-900/50"
+                      }`}
+                    >
+                      {section.title}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+            )}
           </div>
           
-          {/* Search Bar - Hidden on mobile */}
-          <div className="hidden md:flex flex-1 max-w-md mx-4">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Search documentation..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-2.5 bg-zinc-900/80 border border-zinc-700 rounded-md text-zinc-50 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-            <button className="text-zinc-400 hover:text-cyan-400 transition-colors text-xs md:text-sm hidden sm:block">
-              Feedback
-            </button>
-            <button className="text-zinc-400 hover:text-cyan-400 transition-colors text-xs md:text-sm hidden sm:block">
-              Support
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-zinc-950/95 backdrop-blur-sm">
-          <div className="h-full overflow-y-auto">
-            <div className="px-4 py-6 border-b border-zinc-800">
-              <h2 className="text-lg font-semibold mb-4 text-zinc-300">Navigation</h2>
-              <nav className="space-y-2">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => scrollToSection(section.id)}
-                    className={`w-full text-left block text-sm transition-colors duration-200 py-3 px-4 rounded-lg ${
-                      activeSection === section.id
-                        ? "text-cyan-400 bg-cyan-500/10 border-l-2 border-cyan-400 font-medium"
-                        : "text-zinc-400 hover:text-cyan-400 hover:bg-zinc-900/50"
-                    }`}
-                  >
-                    {section.title}
-                  </button>
-                ))}
-              </nav>
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <img src="/logo.png" alt="Brimdex Logo" className="h-12 w-8 md:h-14 md:w-10 object-contain" />
+                <h1 className="bg-gradient-to-r from-cyan-400 via-sky-300 to-cyan-500 bg-clip-text text-xl font-bold tracking-tight text-transparent md:text-2xl" style={{ fontFamily: 'var(--font-geist-sans), sans-serif' }}>
+                  Brimdex
+                </h1>
+              </Link>
             </div>
             
-            {/* Mobile Search */}
-            <div className="px-4 py-4 border-b border-zinc-800">
-              <div className="relative">
+            {/* Search Bar - Centered */}
+            <div className="flex-1 flex justify-center">
+              <div className="relative w-full max-w-md">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <svg className="w-5 h-5 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -228,21 +239,18 @@ export default function HowItWorksPage() {
                 />
               </div>
             </div>
-
-            {/* Mobile Footer Actions */}
-            <div className="px-4 py-4 border-t border-zinc-800 mt-auto">
-              <div className="flex gap-4">
-                <button className="text-zinc-400 hover:text-cyan-400 transition-colors text-sm flex-1 text-center py-2">
-                  Feedback
-                </button>
-                <button className="text-zinc-400 hover:text-cyan-400 transition-colors text-sm flex-1 text-center py-2">
-                  Support
-                </button>
-              </div>
+            
+            <div className="flex items-center gap-4">
+              <button className="text-zinc-400 hover:text-cyan-400 transition-colors text-sm">
+                Feedback
+              </button>
+              <button className="text-zinc-400 hover:text-cyan-400 transition-colors text-sm">
+                Support
+              </button>
             </div>
           </div>
         </div>
-      )}
+      </header>
 
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
