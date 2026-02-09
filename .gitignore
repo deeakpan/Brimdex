@@ -42,6 +42,8 @@ next-env.d.ts
 
 # docs (local-only)
 DEVELOPMENT.md
+FLOW_DIAGRAM.md
+ORACLE_AND_TOKEN_STRUCTURE.md
 
 # deployment addresses (root only - app/deployments.json is needed for build)
 /deployments.json
