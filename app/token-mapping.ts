@@ -2,7 +2,7 @@
  * Token Address to Symbol/Price Mapping
  * Maps token addresses (or placeholder addresses) to asset identifiers
  * for price lookup via CoinGecko API
- * 
+ *
  * This should match scripts/token-mapping.js
  */
 
