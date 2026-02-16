@@ -233,16 +233,9 @@ async function main() {
   
   console.log(`👤 Settling as: ${signer.address}\n`);
 
-  // Get RPC URL from Hardhat config (for HTTP calls)
-  const rpcUrl = hre.network.config.url;
-  if (!rpcUrl) {
-    throw new Error("RPC URL not found in Hardhat network config");
-  }
-
-  // Use Dream RPC WebSocket endpoint explicitly for Somnia Reactivity SDK
-  // Dream RPC is the official Somnia endpoint and supports WebSocket subscriptions
-  const DREAM_RPC_WS = "wss://dream-rpc.somnia.network/ws";
-  const wsUrl = DREAM_RPC_WS;
+  // Use Somnia infra testnet endpoints
+  const rpcUrl = "https://api.infra.testnet.somnia.network";
+  const wsUrl = "wss://api.infra.testnet.somnia.network/ws";
 
   function toWebSocketUrl(httpUrl) {
     // Helper function for other WebSocket conversions if needed
@@ -531,7 +524,7 @@ async function main() {
   console.log(`   Factory address: ${factoryAddress}\n`);
   
   console.log(`   RPC (HTTP): ${rpcUrl}`);
-  console.log(`   RPC (WS):   ${wsUrl} (Dream RPC)\n`);
+  console.log(`   RPC (WS):   ${wsUrl}\n`);
 
   // Check for existing subscription and unsubscribe first
   const existingSubscriptionId = loadSubscriptionId();
