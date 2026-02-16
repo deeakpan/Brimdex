@@ -233,13 +233,19 @@ async function main() {
   
   console.log(`👤 Settling as: ${signer.address}\n`);
 
-  // Get RPC URL from Hardhat config
+  // Get RPC URL from Hardhat config (for HTTP calls)
   const rpcUrl = hre.network.config.url;
   if (!rpcUrl) {
     throw new Error("RPC URL not found in Hardhat network config");
   }
 
+  // Use Dream RPC WebSocket endpoint explicitly for Somnia Reactivity SDK
+  // Dream RPC is the official Somnia endpoint and supports WebSocket subscriptions
+  const DREAM_RPC_WS = "wss://dream-rpc.somnia.network/ws";
+  const wsUrl = DREAM_RPC_WS;
+
   function toWebSocketUrl(httpUrl) {
+    // Helper function for other WebSocket conversions if needed
     // Somnia reactivity subscribe requires a WS transport.
     // Somnia public WS endpoint uses `/ws`.
     // Examples:
@@ -255,8 +261,6 @@ async function main() {
         : httpUrl;
     return ws.endsWith("/ws") ? ws : `${ws.replace(/\/$/, "")}/ws`;
   }
-
-  const wsUrl = toWebSocketUrl(rpcUrl);
 
   // Setup Somnia Reactivity SDK for MarketCreated events (free off-chain subscription)
   // IMPORTANT: the Somnia Reactivity SDK internally creates a WS client using `webSocket()` *without* a URL,
@@ -277,9 +281,10 @@ async function main() {
     },
   });
 
+  // Initialize SDK with explicit WebSocket URL
   const publicClient = viem.createPublicClient({
     chain: somniaTestnet,
-    transport: viem.webSocket(wsUrl),
+    transport: viem.webSocket(wsUrl),  // Explicit URL
   });
 
   const sdk = new SDK({
@@ -288,6 +293,41 @@ async function main() {
 
   // JSON file for persistent storage
   const storagePath = path.join(__dirname, "..", "markets-storage.json");
+  const subscriptionPath = path.join(__dirname, "..", "subscription.json");
+  
+  // Load existing subscription ID
+  function loadSubscriptionId() {
+    if (!fs.existsSync(subscriptionPath)) {
+      return null;
+    }
+    try {
+      const data = JSON.parse(fs.readFileSync(subscriptionPath, "utf8"));
+      return data.subscriptionId || null;
+    } catch (error) {
+      console.warn(`⚠️  Error loading subscription ID: ${error.message}`);
+      return null;
+    }
+  }
+
+  // Save subscription ID
+  function saveSubscriptionId(subscriptionId) {
+    try {
+      fs.writeFileSync(subscriptionPath, JSON.stringify({ subscriptionId }, null, 2), "utf8");
+    } catch (error) {
+      console.warn(`⚠️  Error saving subscription ID: ${error.message}`);
+    }
+  }
+
+  // Clear subscription ID
+  function clearSubscriptionId() {
+    try {
+      if (fs.existsSync(subscriptionPath)) {
+        fs.unlinkSync(subscriptionPath);
+      }
+    } catch (error) {
+      console.warn(`⚠️  Error clearing subscription ID: ${error.message}`);
+    }
+  }
   
   // Atomic write function
   function atomicWrite(data) {
@@ -423,19 +463,33 @@ async function main() {
         console.log(`   Current Time: ${new Date(currentTime * 1000).toLocaleString()}`);
         console.log(`   Overdue by: ${Math.floor((currentTime - Number(expiryTimestamp)) / 60)} minutes`);
 
-        // Get token price
+        // Check if asset is supported by DIA oracle
         const normalizedName = assetName ? assetName.trim().toUpperCase() : null;
         if (!normalizedName) {
           throw new Error(`Invalid asset name: ${assetName}`);
         }
-        const finalPrice = await getTokenPrice(normalizedName);
 
-        console.log(`   Final Price: $${(Number(finalPrice) / 1e6).toFixed(2)}`);
-
-        // Settle
         const marketContract = await ethers.getContractAt(marketABI, marketAddress);
-        const tx = await marketContract.settle(finalPrice);
+        
+        // DIA-supported assets: BTC, ETH, SOL, ARB, SOMI
+        const diaSupportedAssets = ["BTC", "ETH", "SOL", "ARB", "SOMI"];
+        const isDiaSupported = diaSupportedAssets.includes(normalizedName);
+
+        let tx;
+        if (isDiaSupported) {
+          // Use onchain DIA oracle - contract fetches price itself
+          console.log(`   📡 Using DIA onchain oracle for ${normalizedName}...`);
+          tx = await marketContract.settle();
+          console.log(`   Transaction: ${tx.hash}`);
+        } else {
+          // Fallback to offchain oracle
+          console.log(`   🌐 ${normalizedName} not supported by DIA, using offchain oracle...`);
+          const finalPrice = await getTokenPrice(normalizedName);
+          console.log(`   Final Price: $${(Number(finalPrice) / 1e6).toFixed(2)}`);
+          tx = await marketContract.settleWithPrice(finalPrice);
         console.log(`   Transaction: ${tx.hash}`);
+        }
+        
         await tx.wait();
         console.log(`   ✅ Settled!\n`);
         
@@ -464,61 +518,8 @@ async function main() {
     }
   }
 
-  // Initial load: get all existing markets and add to storage if not already there
-  console.log("📊 Processing existing markets from factory...");
-  const existingMarkets = await factory.getAllMarkets();
-  console.log(`   Found ${existingMarkets.length} market(s) in factory\n`);
-
-  let addedCount = 0;
-  for (const marketAddress of existingMarkets) {
-    const marketAddrLower = marketAddress.toLowerCase();
-    
-    // Check if market is already in storage
-    if (!marketsToSettle[marketAddrLower]) {
-      console.log(`   ➕ Adding new market to storage: ${marketAddress}`);
-      try {
-        const market = await ethers.getContractAt(marketABI, marketAddress);
-        const config = await market.marketConfig();
-        const expiryTimestamp = config[3];
-        const assetName = config[0];
-        const settled = config[7];
-        const initialized = config[6];
-        
-        if (!initialized) {
-          console.log(`      ⚠️  Market not initialized, skipping...`);
-          continue;
-        }
-        
-        if (settled) {
-          console.log(`      ✅ Market already settled, skipping...`);
-          continue;
-        }
-        
-        marketsToSettle[marketAddrLower] = {
-          expiry: Number(expiryTimestamp),
-          assetName: assetName,
-          timeLeft: Number(expiryTimestamp) - Math.floor(Date.now() / 1000)
-        };
-        addedCount++;
-        console.log(`      ✅ Added: ${assetName} market, expires ${new Date(Number(expiryTimestamp) * 1000).toLocaleString()}`);
-      } catch (error) {
-        console.error(`      ❌ Error loading market ${marketAddress}: ${error.message}`);
-      }
-    } else {
-      console.log(`   ✓ Market already in storage: ${marketAddress}`);
-    }
-    
-    // Check and settle if needed
-    await checkAndSettleMarket(marketAddress);
-  }
-  
-  if (addedCount > 0) {
-    saveMarkets(marketsToSettle);
-    console.log(`\n   ✅ Added ${addedCount} new market(s) to storage\n`);
-  }
-  
-  // Save final state
-  saveMarkets(marketsToSettle);
+  // Markets will be discovered via subscription events only (no polling)
+  console.log("📊 Markets will be discovered via MarketCreated events only\n");
 
   // Subscribe to MarketCreated events (free off-chain subscription)
   console.log("📡 Setting up MarketCreated event subscription...\n");
@@ -530,141 +531,155 @@ async function main() {
   console.log(`   Factory address: ${factoryAddress}\n`);
   
   console.log(`   RPC (HTTP): ${rpcUrl}`);
-  console.log(`   RPC (WS):   ${wsUrl}\n`);
+  console.log(`   RPC (WS):   ${wsUrl} (Dream RPC)\n`);
 
-  const marketCreatedSubscription = await sdk.subscribe({
-    ethCalls: [],
-    eventContractSources: [factoryAddress],
-    topicOverrides: [marketCreatedTopic],
-    onData: async (data) => {
-      try {
-        console.log("\n📨 ========== MarketCreated EVENT RECEIVED ==========");
-        console.log(`   Raw event data:`, JSON.stringify(data, null, 2));
-        
-        const decoded = viem.decodeEventLog({
-          abi: factoryABI,
-          topics: data.result.topics,
-          data: data.result.data,
-        });
-        
-        const marketAddress = decoded.args.market;
-        const boundToken = decoded.args.boundToken;
-        const breakToken = decoded.args.breakToken;
-        const assetName = decoded.args.name;
-        const lowerBound = decoded.args.lowerBound;
-        const upperBound = decoded.args.upperBound;
-        const expiryTimestamp = decoded.args.expiryTimestamp;
-        
-        console.log(`🆕 NEW MARKET CREATED:`);
-        console.log(`   Market Address: ${marketAddress}`);
-        console.log(`   Asset Name: ${assetName}`);
-        console.log(`   BOUND Token: ${boundToken}`);
-        console.log(`   BREAK Token: ${breakToken}`);
-        console.log(`   Lower Bound: $${(Number(lowerBound) / 1e6).toFixed(2)}`);
-        console.log(`   Upper Bound: $${(Number(upperBound) / 1e6).toFixed(2)}`);
-        console.log(`   Expiry: ${new Date(Number(expiryTimestamp) * 1000).toLocaleString()}`);
-        console.log(`   Expires in: ${Math.floor((Number(expiryTimestamp) - Math.floor(Date.now() / 1000)) / 60)} minutes`);
-        
-        const marketAddrLower = marketAddress.toLowerCase();
-        
-        // Add to tracking
-        marketsToSettle[marketAddrLower] = {
-          expiry: Number(expiryTimestamp),
-          assetName: assetName,
-          timeLeft: Number(expiryTimestamp) - Math.floor(Date.now() / 1000)
-        };
-        saveMarkets(marketsToSettle);
-        console.log(`   ✅ Added to storage and tracking`);
-        console.log(`==========================================\n`);
-        
-        // Check if already expired
-        await checkAndSettleMarket(marketAddress);
-      } catch (error) {
-        console.error(`⚠️  Error processing MarketCreated event: ${error.message}`);
-        console.error(`   Stack: ${error.stack}`);
-      }
-    },
-    onError: (error) => {
-      console.error(`⚠️  Subscription error: ${error.message}`);
-    },
-  });
-
-  if (marketCreatedSubscription instanceof Error) {
-    console.error(`❌ Failed to subscribe to MarketCreated events: ${marketCreatedSubscription.message}`);
-    console.error("   (This requires a WebSocket public client transport.)");
-    throw marketCreatedSubscription;
-  }
-
-  console.log(`   ✅ Subscribed to MarketCreated events`);
-  console.log(`   Subscription ID: ${marketCreatedSubscription.subscriptionId}\n`);
-
-  async function syncWithFactoryMarkets() {
+  // Check for existing subscription and unsubscribe first
+  const existingSubscriptionId = loadSubscriptionId();
+  if (existingSubscriptionId) {
+    console.log(`🔄 Found existing subscription ID: ${existingSubscriptionId}`);
+    console.log(`   Attempting to unsubscribe from old subscription...`);
     try {
-      const factoryMarkets = await factory.getAllMarkets();
-      const currentTime = Math.floor(Date.now() / 1000);
-      let discovered = 0;
-
-      for (const marketAddress of factoryMarkets) {
-        const marketAddrLower = marketAddress.toLowerCase();
-        if (marketsToSettle[marketAddrLower]) continue;
-
-        try {
-          const market = await ethers.getContractAt(marketABI, marketAddress);
-          const config = await market.marketConfig();
-          const initialized = config[6];
-          const settled = config[7];
-          const expiryTimestamp = config[3];
-          const assetName = config[0];
-
-          if (!initialized) continue;
-          if (settled) continue;
-
-          marketsToSettle[marketAddrLower] = {
-            expiry: Number(expiryTimestamp),
-            assetName,
-            timeLeft: Number(expiryTimestamp) - currentTime,
-          };
-          discovered++;
-          console.log(`🧲 Discovered new factory market (poll): ${marketAddress} (${assetName}) expires ${new Date(Number(expiryTimestamp) * 1000).toLocaleString()}`);
-        } catch (e) {
-          console.error(`⚠️  Failed to inspect factory market ${marketAddress}: ${e.message}`);
-        }
-      }
-
-      if (discovered > 0) saveMarkets(marketsToSettle);
-    } catch (e) {
-      console.error(`⚠️  syncWithFactoryMarkets failed: ${e.message}`);
+      // Try to unsubscribe using the precompile contract directly
+      // The SDK doesn't expose a way to unsubscribe by ID, so we'll use the contract
+      const SOMNIA_REACTIVITY_PRECOMPILE = "0x0000000000000000000000000000000000000400"; // Somnia reactivity precompile address
+      const precompileABI = [
+        "function unsubscribe(uint256 subscriptionId) external"
+      ];
+      const precompile = await ethers.getContractAt(precompileABI, SOMNIA_REACTIVITY_PRECOMPILE);
+      const tx = await precompile.unsubscribe(existingSubscriptionId);
+      await tx.wait();
+      console.log(`   ✅ Unsubscribed from old subscription\n`);
+      clearSubscriptionId();
+    } catch (error) {
+      console.warn(`   ⚠️  Could not unsubscribe (subscription may have expired): ${error.message}\n`);
+      // Clear it anyway so we can try to create a new one
+      clearSubscriptionId();
     }
   }
 
-  // Poll every 4 seconds: (1) diff factory markets, (2) check expiry timestamps
-  console.log("⏱️  Starting expiry polling (every 4 seconds)...\n");
+  // Subscribe to MarketCreated events (required - no polling fallback)
+  // Retry logic: subscriptions might need a moment to clear or there might be rate limits
+  let marketCreatedSubscription = null;
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 5000; // 5 seconds
+  
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 1) {
+        console.log(`   ⏳ Retry attempt ${attempt}/${MAX_RETRIES} (waiting ${RETRY_DELAY/1000}s)...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      }
+      
+      marketCreatedSubscription = await sdk.subscribe({
+        ethCalls: [],
+        eventContractSources: [factoryAddress],
+        topicOverrides: [marketCreatedTopic],
+        onData: async (data) => {
+        try {
+          console.log("\n📨 ========== MarketCreated EVENT RECEIVED ==========");
+          console.log(`   Raw event data:`, JSON.stringify(data, null, 2));
+          
+          const decoded = viem.decodeEventLog({
+            abi: factoryABI,
+            topics: data.result.topics,
+            data: data.result.data,
+          });
+          
+          const marketAddress = decoded.args.market;
+          const boundToken = decoded.args.boundToken;
+          const breakToken = decoded.args.breakToken;
+          const assetName = decoded.args.name;
+          const lowerBound = decoded.args.lowerBound;
+          const upperBound = decoded.args.upperBound;
+          const expiryTimestamp = decoded.args.expiryTimestamp;
+          
+          console.log(`🆕 NEW MARKET CREATED:`);
+          console.log(`   Market Address: ${marketAddress}`);
+          console.log(`   Asset Name: ${assetName}`);
+          console.log(`   BOUND Token: ${boundToken}`);
+          console.log(`   BREAK Token: ${breakToken}`);
+          console.log(`   Lower Bound: $${(Number(lowerBound) / 1e6).toFixed(2)}`);
+          console.log(`   Upper Bound: $${(Number(upperBound) / 1e6).toFixed(2)}`);
+          console.log(`   Expiry: ${new Date(Number(expiryTimestamp) * 1000).toLocaleString()}`);
+          console.log(`   Expires in: ${Math.floor((Number(expiryTimestamp) - Math.floor(Date.now() / 1000)) / 60)} minutes`);
+          
+          const marketAddrLower = marketAddress.toLowerCase();
+          
+          // Add to tracking
+          marketsToSettle[marketAddrLower] = {
+            expiry: Number(expiryTimestamp),
+            assetName: assetName,
+            timeLeft: Number(expiryTimestamp) - Math.floor(Date.now() / 1000)
+          };
+          saveMarkets(marketsToSettle);
+          console.log(`   ✅ Added to storage and tracking`);
+          console.log(`==========================================\n`);
+          
+          // Check if already expired
+          await checkAndSettleMarket(marketAddress);
+        } catch (error) {
+          console.error(`⚠️  Error processing MarketCreated event: ${error.message}`);
+          console.error(`   Stack: ${error.stack}`);
+        }
+      },
+      onError: (error) => {
+        console.error(`⚠️  Subscription error: ${error.message}`);
+      },
+    });
+
+    if (marketCreatedSubscription instanceof Error) {
+      throw marketCreatedSubscription;
+    }
+
+      console.log(`   ✅ Subscribed to MarketCreated events`);
+      console.log(`   Subscription ID: ${marketCreatedSubscription.subscriptionId}\n`);
+      
+      // Save subscription ID for next time
+      saveSubscriptionId(marketCreatedSubscription.subscriptionId);
+      console.log(`   💾 Saved subscription ID to subscription.json\n`);
+      
+      break; // Success, exit retry loop
+    } catch (error) {
+      if (attempt === MAX_RETRIES) {
+        // Last attempt failed
+        console.error(`❌ Failed to subscribe after ${MAX_RETRIES} attempts: ${error.message}`);
+        if (error.message && error.message.includes("Too many subscriptions")) {
+          console.error(`\n💡 ERROR: Too many subscriptions for this wallet address.`);
+          console.error(`💡 Subscriptions are tied to your wallet address (${signer.address}).`);
+          console.error(`💡 Possible solutions:`);
+          console.error(`   1. Wait a few minutes for old subscriptions to expire/clear`);
+          console.error(`   2. Use a different wallet address`);
+          console.error(`   3. Contact Somnia support about subscription limits`);
+          console.error(`   4. Check if subscriptions auto-expire after inactivity\n`);
+        }
+        throw error;
+      } else {
+        console.warn(`   ⚠️  Attempt ${attempt} failed: ${error.message}`);
+        // Continue to next retry
+      }
+    }
+  }
+  
+  if (!marketCreatedSubscription) {
+    throw new Error("Failed to create subscription after all retries");
+  }
+
+  // Check expiry periodically (only for markets already in storage)
+  console.log("⏱️  Starting expiry checker (every 4 seconds)...\n");
   
   const POLL_INTERVAL = 4000; // 4 seconds
-  let pollCount = 0;
   let pollInterval = setInterval(async () => {
     try {
-      pollCount++;
       const currentTime = Math.floor(Date.now() / 1000);
       
       // Reload markets from storage in case they were updated
       marketsToSettle = loadMarkets();
-
-      // Always diff factory -> storage so we don't miss MarketCreated events
-      await syncWithFactoryMarkets();
       
       if (Object.keys(marketsToSettle).length === 0) {
-        if (pollCount % 15 === 0) { // Log every 15 polls (1 minute) if no markets
-          console.log(`⏱️  Poll #${pollCount}: No markets to check (waiting for new markets...)`);
-        }
-        return;
+        return; // No markets to check
       }
       
-      if (pollCount % 15 === 0) { // Log every 15 polls (1 minute)
-        console.log(`⏱️  Poll #${pollCount}: Checking ${Object.keys(marketsToSettle).length} market(s) for expiry...`);
-      }
-      
-      // Check all tracked markets
+      // Check all tracked markets for expiry
       const expiredMarkets = [];
       for (const marketAddress of Object.keys(marketsToSettle)) {
         const info = marketsToSettle[marketAddress];
@@ -682,15 +697,15 @@ async function main() {
         console.log(`==========================================\n`);
       }
     } catch (error) {
-      console.error(`⚠️  Error in polling loop: ${error.message}`);
+      console.error(`⚠️  Error in expiry checker: ${error.message}`);
       console.error(`   Stack: ${error.stack}`);
     }
   }, POLL_INTERVAL);
 
   console.log("✅ Bot running!");
-  console.log("   - MarketCreated events: Real-time (push-based)");
-  console.log("   - Expiry checks: Every 4 seconds (local JSON vs system time)");
-  console.log("   - No subscription costs!");
+  console.log("   - MarketCreated events: Real-time (push-based subscription)");
+  console.log("   - Expiry checks: Every 4 seconds (for markets in storage)");
+  console.log("   - No polling for new markets - subscription only");
   console.log("   Press Ctrl+C to stop\n");
 
   // Keep process alive
@@ -710,13 +725,33 @@ async function main() {
     console.log("\n\n🛑 Stopping bot...");
     try {
       if (marketCreatedSubscription && typeof marketCreatedSubscription.unsubscribe === 'function') {
+        console.log("   Unsubscribing from MarketCreated events...");
         await marketCreatedSubscription.unsubscribe();
+        console.log("   ✅ Unsubscribed");
+        clearSubscriptionId();
+      } else {
+        // Try to unsubscribe using stored ID if subscription object doesn't have unsubscribe method
+        const storedId = loadSubscriptionId();
+        if (storedId) {
+          try {
+            const SOMNIA_REACTIVITY_PRECOMPILE = "0x0000000000000000000000000000000000000400";
+            const precompileABI = ["function unsubscribe(uint256 subscriptionId) external"];
+            const precompile = await ethers.getContractAt(precompileABI, SOMNIA_REACTIVITY_PRECOMPILE);
+            const tx = await precompile.unsubscribe(storedId);
+            await tx.wait();
+            console.log(`   ✅ Unsubscribed using stored ID: ${storedId}`);
+          } catch (error) {
+            console.warn(`   ⚠️  Could not unsubscribe using stored ID: ${error.message}`);
+          }
+          clearSubscriptionId();
+        }
       }
       if (pollInterval) {
         clearInterval(pollInterval);
+        console.log("   ✅ Stopped expiry checker");
       }
     } catch (error) {
-      console.error(`Error cleaning up: ${error.message}`);
+      console.error(`   ⚠️  Error cleaning up: ${error.message}`);
     }
     process.exit(0);
   });
